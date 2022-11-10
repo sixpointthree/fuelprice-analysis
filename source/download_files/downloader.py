@@ -1,4 +1,5 @@
-import urllib
+from urllib import request, error
+
 
 def resource_path(year, month, day):
     return f"prices/{year}/{str(month).zfill(2)}/{year}-{str(month).zfill(2)}-{str(day).zfill(2)}-prices.csv"
@@ -12,6 +13,6 @@ def download_file(year, month, day, target_path):
     link = download_link(year, month, day)
     print(f"Downloading {link} to {target_path}")
     try:
-        urllib.request.urlretrieve(link, target_path)
-    except urllib.error.HTTPError as e:
+        request.urlretrieve(link, target_path)
+    except error.HTTPError as e:
         print(f"Error: {e}")
