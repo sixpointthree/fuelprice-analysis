@@ -133,3 +133,4 @@ dmypy.json
 
 # Ignore custom paths
 experimental/filter_mvp_stations/temp
+experimental/download_files/*.csv
