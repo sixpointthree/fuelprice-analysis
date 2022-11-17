@@ -1,5 +1,12 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Float
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+DB_NAME = 'fuelprices.db'
+
+engine = create_engine(f'sqlite:///{DB_NAME}')
+Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
 
@@ -24,3 +31,5 @@ class Stations(Base):
     place = Column(String)
     lat = Column(Integer)
     lng = Column(Integer)
+
+Base.metadata.create_all(engine)
