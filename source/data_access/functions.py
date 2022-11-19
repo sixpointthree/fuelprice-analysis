@@ -1,3 +1,5 @@
+import dateutil.tz
+
 from .db_model import Prices, Stations, Session, PRICES_TABLE_NAME, STATIONS_TABLE_NAME
 import pandas as pd
 from source.download_files.downloader import download_prices, download_station
@@ -88,8 +90,14 @@ def __read_df_from_db_stations(from_datetime: int, to_datetime: int, station_uui
             Prices.station_uuid.in_(station_uuids)
         ).statement, session.bind)
 
-# load a range of datetime values from the database
-# and return them as a pandas dataframe
+
+def get_prices_by_date_tz(from_date: datetime.date, to_date: datetime.date, station_uuids: list = None,
+                          tz: dateutil.tz.tzfile = dateutil.tz.gettz('UTC')):
+    from_datetime = int(datetime.datetime.combine(from_date, datetime.time.min).replace(tzinfo=tz).timestamp())
+    to_datetime = int(datetime.datetime.combine(to_date, datetime.time.max).replace(tzinfo=tz).timestamp())
+    df = get_prices(from_datetime, to_datetime, station_uuids)
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s').dt.tz_localize('UTC').dt.tz_convert(tz)
+    return df
 def get_prices(from_datetime: int, to_datetime: int, station_uuids: list = None):
     with Session() as session:
         # get data from database

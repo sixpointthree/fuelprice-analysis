@@ -15,6 +15,5 @@ class TestGetMVPStationInfo(unittest.TestCase):
         info = get_station_info_uuid(UUID_SHELL_GOEPPINGEN)
         self.assertEqual("shell", info.brand)
 
-
 if __name__ == '__main__':
     unittest.main()
