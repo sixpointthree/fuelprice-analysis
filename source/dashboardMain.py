@@ -40,10 +40,6 @@ else:
     to_datetime = datetime.datetime(date_range[1].year, date_range[1].month, date_range[1].day)
     df = get_prices_by_date_tz(from_datetime, to_datetime, station_uuids=MVP_UUIDS, tz=tz.gettz('Europe/Berlin'))
 
-
-# show table
-st.dataframe(df)
-
 # -----Mainpage------
 st.title("Fuelprice Dashboard")
 st.markdown("##")
@@ -82,6 +78,9 @@ if selected_petrolgrade:
         st.plotly_chart(fig_fuelprice, use_container_width=True)
 else:
     st.write("Select a petrol grade")
+
+# show table
+st.dataframe(df)
 
 st.markdown("----")
 
