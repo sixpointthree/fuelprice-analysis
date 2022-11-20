@@ -45,7 +45,7 @@ def add_station(station_uuid: str, name: str, brand: str, street: str, place: st
 
 def add_stations(df: pd.DataFrame):
     with Session() as session:
-        df.to_sql(name=STATIONS_TABLE_NAME, con=session.bind, if_exists='replace', index=False, dtype={
+        df.to_sql(name=STATIONS_TABLE_NAME, con=session.bind, if_exists='append', index=False, dtype={
             'uuid': types.VARCHAR(length=36),
             'name': types.VARCHAR(length=100),
             'brand': types.VARCHAR(length=100),
@@ -56,16 +56,9 @@ def add_stations(df: pd.DataFrame):
         })
 
 
-
 def add_prices(df: pd.DataFrame):
     with Session() as session:
-        max_id = session.query(Prices.id).order_by(Prices.id.desc()).first()
-        if max_id is None:
-            max_id = 0
-        else:
-            max_id = max_id['id']
-        df.to_sql(name=PRICES_TABLE_NAME, con=session.bind, if_exists='replace', index=False, dtype={
-            'id': types.Integer,
+        df.to_sql(name=PRICES_TABLE_NAME, con=session.bind, if_exists='append', index=False, dtype={
             'timestamp': types.Integer,
             'station_uuid': types.VARCHAR(length=36),
             'price_diesel': types.Float(precision=3),
@@ -99,49 +92,47 @@ def get_prices_by_date_tz(from_date: datetime.date, to_date: datetime.date, stat
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s').dt.tz_localize('UTC').dt.tz_convert(tz)
     return df
 def get_prices(from_datetime: int, to_datetime: int, station_uuids: list = None):
-    with Session() as session:
-        # get data from database
+    # get data from database
+    if station_uuids is None:
+        df = __read_df_from_db(from_datetime=from_datetime, to_datetime=to_datetime)
+    else:
+        df = __read_df_from_db_stations(from_datetime=from_datetime, to_datetime=to_datetime, station_uuids=station_uuids)
+    if len(df) > 0:
+        print(df.columns)
+        df_existing_dates = pd.to_datetime(df['timestamp'], unit='s').dt.date
+    else:
+        print(f'Did not find any records in database for {from_datetime} to {to_datetime}')
+        df_existing_dates = None
+    from_datetime_dt = datetime.datetime.fromtimestamp(from_datetime).date()
+    to_datetime_dt = datetime.datetime.fromtimestamp(to_datetime).date()
+    diff = to_datetime_dt - from_datetime_dt
+    missing_list_dates = []
+    for i in range(diff.days + 1):
+        date = from_datetime_dt + datetime.timedelta(days=i)
+        if df_existing_dates is None or date not in df_existing_dates.values:
+            missing_list_dates.append(date)
+
+    # check if data is empty
+    if len(missing_list_dates) > 0:
+        # to-do check if data is available at all
+        # try to download the data
+        print(f'Downloading {len(missing_list_dates)} data sets for {missing_list_dates}')
+        for date in missing_list_dates:
+            download_path = f'prices_{date.year}-{date.month}-{date.day}.csv'
+            download_prices(year=date.year, month=date.month, day=date.day, target_path=download_path)
+            df_temp = load_prices_from_file(filepath=download_path)
+            add_prices(df_temp)
+            print(f'Added {len(df_temp)} records for {date}')
+            # remove file
+            os.remove(download_path)
         if station_uuids is None:
             df = __read_df_from_db(from_datetime=from_datetime, to_datetime=to_datetime)
         else:
-            df = __read_df_from_db_stations(from_datetime=from_datetime, to_datetime=to_datetime, station_uuids=station_uuids)
-        if len(df) > 0:
-            df_existing_dates = pd.to_datetime(df['timestamp'], unit='s').dt.date
-        else:
-            print(f'Did not find any records in database for {from_datetime} to {to_datetime}')
-            df_existing_dates = None
-        from_datetime_dt = datetime.datetime.fromtimestamp(from_datetime).date()
-        to_datetime_dt = datetime.datetime.fromtimestamp(to_datetime).date()
-        diff = to_datetime_dt - from_datetime_dt
-        missing_list_dates = []
-        for i in range(diff.days + 1):
-            date = from_datetime_dt + datetime.timedelta(days=i)
-            if df_existing_dates is None or date not in df_existing_dates.values:
-                missing_list_dates.append(date)
-
-        # check if data is empty
-        if len(missing_list_dates) > 0:
-            # to-do check if data is available at all
-            # try to download the data
-            list_dfs = []
-            print(f'Downloading {len(missing_list_dates)} data sets for {missing_list_dates}')
-            for date in missing_list_dates:
-                download_path = f'prices_{date.year}-{date.month}-{date.day}.csv'
-                download_prices(year=date.year, month=date.month, day=date.day, target_path=download_path)
-                df_temp = load_prices_from_file(filepath=download_path)
-                list_dfs.append(df_temp)
-                # remove file
-                os.remove(download_path)
-            additional_dfs = pd.concat(list_dfs)
-            add_prices(additional_dfs)
-            if station_uuids is None:
-                df = __read_df_from_db(from_datetime=from_datetime, to_datetime=to_datetime)
-            else:
-                df = __read_df_from_db_stations(from_datetime=from_datetime, to_datetime=to_datetime,
-                                                station_uuids=station_uuids)
-            return df
-        else:
-            return df
+            df = __read_df_from_db_stations(from_datetime=from_datetime, to_datetime=to_datetime,
+                                            station_uuids=station_uuids)
+        return df
+    else:
+        return df
 
 
 
