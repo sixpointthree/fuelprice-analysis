@@ -3,6 +3,13 @@ import plotly.express as px
 import streamlit as st
 import datetime
 from dateutil import tz
+from data_access.functions import get_prices_by_date_tz
+
+UUID_OMV_DONZDORF = "16f07bfd-0bde-4126-a393-ea8a7d053283"
+UUID_ARAL_GOEPPINGEN = "77c4cc3c-ae11-43c4-85cc-5c147409b46f"
+UUID_SHELL_GOEPPINGEN = "c13f60cb-7e1c-40a8-b05a-157fd571b3fa"
+
+MVP_UUIDS = [UUID_OMV_DONZDORF, UUID_ARAL_GOEPPINGEN, UUID_SHELL_GOEPPINGEN]
 
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
 st.set_page_config(page_title="Dashboard",
@@ -10,11 +17,8 @@ st.set_page_config(page_title="Dashboard",
                    layout="wide"
                    )
 
-df_orig = pd.read_csv('data/mvp_station_prices_2019-10_omv_donzdorf.csv', sep=',')
-df = df_orig
-
 # filter petrol grade
-list_petrolgrade = ['diesel', 'e5', 'e10']
+list_petrolgrade = ['price_diesel', 'price_e5', 'price_e10']
 st.sidebar.header("Filter here:")
 selected_petrolgrade = st.sidebar.multiselect(
     "Select petrol grade:",
@@ -22,17 +26,19 @@ selected_petrolgrade = st.sidebar.multiselect(
     default=list_petrolgrade
 )
 
+
 # filter date range
-date_range = st.sidebar.date_input("date range without default", [datetime.date(2019, 10, 1), datetime.date(2019, 10, 31)])
+date_range = st.sidebar.date_input(label="Select a date:",
+                                   min_value=datetime.date(2014, 6, 8),
+                                   max_value=datetime.date.today() - datetime.timedelta(days=1),
+                                   value=(datetime.date(2019, 10, 1), datetime.date(2019, 10, 5)))
 if len(date_range) != 2:
     st.write("Select date range")
+    st.stop()
 else:
-    EUR = tz.gettz('Europe / Berlin')
-    from_datetime = datetime.datetime(date_range[0].year, date_range[0].month, date_range[0].day, 0, 0, 0, tzinfo=EUR).isoformat(sep=" ", timespec="seconds")
-    to_datetime = datetime.datetime(date_range[1].year, date_range[1].month, date_range[1].day, 23, 59, 59, tzinfo=EUR).isoformat(sep=" ", timespec="seconds")
-    df = df.query(
-        "date >= @from_datetime and date <= @to_datetime"
-    )
+    from_datetime = datetime.date(date_range[0].year, date_range[0].month, date_range[0].day)
+    to_datetime = datetime.datetime(date_range[1].year, date_range[1].month, date_range[1].day)
+    df = get_prices_by_date_tz(from_datetime, to_datetime, station_uuids=MVP_UUIDS, tz=tz.gettz('Europe/Berlin'))
 
 
 # show table
@@ -64,7 +70,7 @@ if selected_petrolgrade:
         st.subheader("Lineplot fuel price")
         fig_fuelprice = px.line(
             df,
-            x="date",
+            x="timestamp",
             y=selected_petrolgrade,
             title="<b> Price per petrol gate over time </b>",
             template="plotly_dark",
