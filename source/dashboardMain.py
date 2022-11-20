@@ -3,13 +3,15 @@ import plotly.express as px
 import streamlit as st
 import datetime
 from dateutil import tz
-from data_access.functions import get_prices_by_date_tz
+from data_access.functions import get_prices_by_date_tz, check_stations_csv
 
 UUID_OMV_DONZDORF = "16f07bfd-0bde-4126-a393-ea8a7d053283"
 UUID_ARAL_GOEPPINGEN = "77c4cc3c-ae11-43c4-85cc-5c147409b46f"
 UUID_SHELL_GOEPPINGEN = "c13f60cb-7e1c-40a8-b05a-157fd571b3fa"
 
 MVP_UUIDS = [UUID_OMV_DONZDORF, UUID_ARAL_GOEPPINGEN, UUID_SHELL_GOEPPINGEN]
+
+check_stations_csv()
 
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
 st.set_page_config(page_title="Dashboard",
