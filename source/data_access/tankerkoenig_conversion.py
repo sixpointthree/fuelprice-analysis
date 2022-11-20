@@ -2,7 +2,7 @@ import pandas as pd
 from source.download_files.downloader import download_stations
 from source.datetime_conversion.functions import convert_df_to_epoch_seconds_utc
 
-PRICES_COLUMNS = ['id', 'timestamp', 'station_uuid', 'price_diesel', 'price_e5', 'price_e10']
+PRICES_COLUMNS = ['timestamp', 'station_uuid', 'price_diesel', 'price_e5', 'price_e10']
 PRICES_TANKERK_COLUMNS = ['date', 'station_uuid', 'diesel', 'e5', 'e10', 'dieselchange', 'e5change', 'e10change']
 STATIONS_COLUMNS = ['uuid', 'name', 'brand', 'street', 'place', 'lat', 'lon']
 STATIONS_TANKERK_COLUMNS = ['uuid', 'name', 'brand', 'street', 'house_number',
@@ -11,7 +11,6 @@ STATIONS_TANKERK_COLUMNS = ['uuid', 'name', 'brand', 'street', 'house_number',
 def load_prices_from_file(filepath: str):
     df_tk = pd.read_csv(filepath, sep=',', names=PRICES_TANKERK_COLUMNS, header=1)
     df = pd.DataFrame(columns=PRICES_COLUMNS)
-    df['id'] = -1
     df['timestamp'] = convert_df_to_epoch_seconds_utc(df=df_tk, column='date')
     df['station_uuid'] = df_tk['station_uuid']
     df['price_diesel'] = df_tk['diesel']

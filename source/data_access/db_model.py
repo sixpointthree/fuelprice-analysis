@@ -15,9 +15,8 @@ Base = declarative_base()
 # create table prices with timestamp, price, station_id
 class Prices(Base):
     __tablename__ = PRICES_TABLE_NAME
-    id = Column(Integer, primary_key=True)
-    timestamp = Column(Integer)
-    station_uuid = Column(String, ForeignKey('stations.uuid'))
+    timestamp = Column(Integer, primary_key=True)
+    station_uuid = Column(String, ForeignKey('stations.uuid'), primary_key=True)
     price_diesel = Column(Float)
     price_e5 = Column(Float)
     price_e10 = Column(Float)
