@@ -4,3 +4,4 @@ streamlit
 numpy
 python-dateutil
 sqlalchemy
+geographiclib
