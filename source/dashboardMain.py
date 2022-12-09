@@ -33,7 +33,7 @@ selected_petrolgrade = st.sidebar.multiselect(
 date_range = st.sidebar.date_input(label="Select a date:",
                                    min_value=datetime.date(2014, 6, 8),
                                    max_value=datetime.date.today() - datetime.timedelta(days=1),
-                                   value=(datetime.date(2019, 10, 1), datetime.date(2019, 10, 5)))
+                                   value=(datetime.date.today() - datetime.timedelta(days=8), datetime.date.today() - datetime.timedelta(days=1)))
 if len(date_range) != 2:
     st.write("Select date range")
     st.stop()
