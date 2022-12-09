@@ -29,7 +29,7 @@ def get_all_stations():
         data = session.query(Stations).all()
         return data
 
-def get_stations_by_coords(lat: float, lon: float, radius_km: int) -> list:
+def get_stations_by_coords(lat: float, lon: float, radius_km: float) -> pd.DataFrame:
     geod = Geodesic.WGS84
 
     theta = 0  # direction from North, clockwise
@@ -46,10 +46,15 @@ def get_stations_by_coords(lat: float, lon: float, radius_km: int) -> list:
     lat_south = lat - radius_km / 111.3
 
     with Session() as session:
-        return session.query(Stations).filter(
-            Stations.lat.between(lat_south, lat_north),
-            Stations.lon.between(lon_west, lon_east)
-        ).all()
+        df = pd.read_sql(session.query(Stations).filter(
+            Stations.lat >= lat_south,
+            Stations.lat <= lat_north,
+            Stations.lon >= lon_west,
+            Stations.lon <= lon_east
+        ).statement, session.bind)
+        if len(df) == 0:
+            raise ValueError(f'No stations found in radius {radius_km}km around {lat}, {lon}')
+        return df
 
 
 def add_station(station_uuid: str, name: str, brand: str, street: str, place: str, lat: float, lng: float):
@@ -74,8 +79,8 @@ def add_stations(df: pd.DataFrame):
             'brand': types.String,
             'street': types.String,
             'place': types.String,
-            'lat': types.Float(precision=2),
-            'lng': types.Float(precision=2)
+            'lat': types.Float(precision=5),
+            'lng': types.Float(precision=5)
         })
 
 

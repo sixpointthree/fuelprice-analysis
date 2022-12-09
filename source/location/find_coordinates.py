@@ -8,6 +8,6 @@ def find_coors_by_text(query: str) -> tuple:
     if response.status_code == 200:
         data = response.json()
         if len(data) > 0:
-            return data[0]['lat'], data[0]['lon']
-        raise AttributeError('No coordinates found for query: ' + query)
-    raise RuntimeError('Failed to get coordinates for query: ' + query + 'status code: ' + str(response.status_code))
+            return float(data[0]['lat']), float(data[0]['lon'])
+        raise AttributeError(f'No coordinates found for query len({len(query)}): {query}')
+    raise RuntimeError(f'Failed to get coordinates for query: {query}, status_code: {response.status_code}')
