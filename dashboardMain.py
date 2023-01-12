@@ -4,12 +4,12 @@ import streamlit as st
 import datetime
 from dateutil import tz
 from source.data_access.functions import get_prices_by_date_tz, check_stations_csv
+from source.location.find_stations import find_stations_from_db_by_location
 
 UUID_OMV_DONZDORF = "16f07bfd-0bde-4126-a393-ea8a7d053283"
-UUID_ARAL_GOEPPINGEN = "77c4cc3c-ae11-43c4-85cc-5c147409b46f"
-UUID_SHELL_GOEPPINGEN = "c13f60cb-7e1c-40a8-b05a-157fd571b3fa"
 
-MVP_UUIDS = [UUID_OMV_DONZDORF, UUID_ARAL_GOEPPINGEN, UUID_SHELL_GOEPPINGEN]
+station_desc = "Anton Schmid GmbH 6 Co KG, Brand: None, Address: Mozartstraße 33, 73072 Donzdorf"
+station_uuid = UUID_OMV_DONZDORF
 
 check_stations_csv()
 
@@ -22,6 +22,22 @@ st.set_page_config(page_title="Dashboard",
 # filter petrol grade
 list_petrolgrade = ['price_diesel', 'price_e5', 'price_e10']
 st.sidebar.header("Filter here:")
+
+# add text input with submit button
+with st.form(key='location_form'):
+    location_input = st.text_input("Enter location:", value="shell esslingen")
+    submit_button = st.form_submit_button(label='Find')
+
+if submit_button:
+    selected_stations = find_stations_from_db_by_location(location_input, 1)
+    if len(selected_stations) < 1:
+        st.write(f"No stations found for query: {location_input}")
+    else:
+        station = selected_stations.iloc[0]
+        station_desc = f"{station['name']}, Brand: {station['brand']}, Address: {station['street']}, {station['place']}"
+        print(station_desc)
+        station_uuid = station['uuid']
+
 selected_petrolgrade = st.sidebar.multiselect(
     "Select petrol grade:",
     options=list_petrolgrade,
@@ -40,10 +56,11 @@ if len(date_range) != 2:
 else:
     from_datetime = datetime.date(date_range[0].year, date_range[0].month, date_range[0].day)
     to_datetime = datetime.datetime(date_range[1].year, date_range[1].month, date_range[1].day)
-    df = get_prices_by_date_tz(from_datetime, to_datetime, station_uuids=MVP_UUIDS, tz=tz.gettz('Europe/Berlin'))
+    df = get_prices_by_date_tz(from_datetime, to_datetime, station_uuids=[station_uuid], tz=tz.gettz('Europe/Berlin'))
 
 # -----Mainpage------
 st.title("Fuelprice Dashboard")
+st.write(f"Station:    {station_desc}")
 st.markdown("##")
 
 if selected_petrolgrade:
