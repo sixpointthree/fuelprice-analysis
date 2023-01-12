@@ -20,14 +20,21 @@ st.set_page_config(page_title="Dashboard",
                    )
 
 # filter petrol grade
-list_petrolgrade = ['price_diesel', 'price_e5', 'price_e10']
+list_petrolgrade = ['diesel', 'e5', 'e10']
 st.sidebar.header("Filter here:")
-selected_petrolgrade = st.sidebar.multiselect(
+selected_petrolgrade_txt = st.sidebar.multiselect(
     "Select petrol grade:",
     options=list_petrolgrade,
     default=list_petrolgrade
 )
-
+selected_petrolgrade = []
+for grade in selected_petrolgrade_txt:
+    if grade == 'diesel':
+        selected_petrolgrade.append('price_diesel')
+    if grade == 'e5':
+        selected_petrolgrade.append('price_e5')
+    if grade == 'e10':
+        selected_petrolgrade.append('price_e10')
 
 # filter date range
 date_range = st.sidebar.date_input(label="Select a date:",
@@ -47,37 +54,60 @@ st.title("Fuelprice Dashboard")
 st.markdown("##")
 
 if selected_petrolgrade:
-    left_col, right_col = st.columns([1, 2])
-    with left_col:
-        st.subheader("Barchart fuel price")
-        fig_mean = px.bar(
-            x=selected_petrolgrade,
-            y=df.loc[1:, selected_petrolgrade].mean(axis=0),
-            orientation="v",
-            title="<b>Mean price per petrol grade </b>",
-            color_discrete_sequence=["#0013B8"],
-            template="plotly_white",
-            )
-        fig_mean.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            xaxis=(dict(showgrid=False))
-        )
-        st.plotly_chart(fig_mean, use_container_width=True)
+    tab_hist_data, tab_prediction, tab_recommend = st.tabs(['historic data', 'prediction', 'recommendationfor action'])
 
-    with right_col:
-        st.subheader("Lineplot fuel price")
-        fig_fuelprice = px.line(
-            df,
-            x="timestamp",
-            y=selected_petrolgrade,
-            title="<b> Price per petrol gate over time </b>",
-            template="plotly_dark",
-        )
-        fig_fuelprice.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            xaxis=(dict(showgrid=False))
-        )
-        st.plotly_chart(fig_fuelprice, use_container_width=True)
+    with tab_hist_data:
+        left_col, right_col = st.columns([3, 10])
+        # darstellung Durchschnitt, min, max der gewählten Spritsorten
+        avg_price = df.loc[1:, selected_petrolgrade].mean(axis=0).round(decimals=2)
+        min_price = df.loc[1:, selected_petrolgrade].min(axis=0).round(decimals=2)
+        max_price = df.loc[1:, selected_petrolgrade].max(axis=0).round(decimals=2)
+
+        with left_col:
+            if len(selected_petrolgrade_txt) > 0:
+                st.subheader(selected_petrolgrade_txt[0])
+                st.write(f'Ø {avg_price[0]}€')
+                st.caption(f'min: {min_price[0]}€')
+                st.caption(f'max: {max_price[0]}€')
+
+            if len(selected_petrolgrade_txt) > 1:
+                st.markdown("----")
+                st.subheader(selected_petrolgrade_txt[1])
+                st.write(f'Ø {avg_price[1]}€')
+                st.caption(f'min: {min_price[1]}€')
+                st.caption(f'max: {max_price[1]}€')
+
+            if len(selected_petrolgrade_txt) > 2:
+                st.markdown("----")
+                st.subheader(selected_petrolgrade_txt[2])
+                st.write(f'Ø {avg_price[2]}€')
+                st.caption(f'min: {min_price[2]}€')
+                st.caption(f'max: {max_price[2]}€')
+
+        with right_col:
+            # Darstellung Preisverlauf in Lineplot
+            st.subheader("Time course of selected fuel prices")
+            fig_fuelprice = px.line(
+                df,
+                x="timestamp",
+                y=selected_petrolgrade,
+                title="<b> Price per petrol grade</b>",
+                template="plotly_dark",
+            )
+            fig_fuelprice.update_layout(
+                plot_bgcolor="rgba(0,0,0,0)",
+                xaxis=(dict(showgrid=False))
+            )
+            st.plotly_chart(fig_fuelprice, use_container_width=True)
+    with tab_prediction:
+        # hier die vorhersagen
+        st.write('Inhalt folgt')
+    with tab_recommend:
+        # hier Handlungsempfehlungen
+        st.subheader('Recommendation in action:')
+        st.write('~ Example ~')
+        st.subheader('Based on:')
+        st.write('~ Example ~')
 else:
     st.write("Select a petrol grade")
 
@@ -85,7 +115,6 @@ else:
 st.dataframe(df)
 
 st.markdown("----")
-
 
 hide_style = """
         <style>
