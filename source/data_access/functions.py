@@ -7,6 +7,7 @@ from source.data_access.tankerkoenig_conversion import load_prices_from_file, lo
 import datetime
 import os
 from sqlalchemy import types
+from geographiclib.geodesic import Geodesic
 
 
 # trigger download of requested date
@@ -28,6 +29,33 @@ def get_all_stations():
         data = session.query(Stations).all()
         return data
 
+def get_stations_by_coords(lat: float, lon: float, radius_km: float) -> pd.DataFrame:
+    geod = Geodesic.WGS84
+
+    theta = 0  # direction from North, clockwise
+    azi1 = theta - 90  # (90 degrees to the left)
+    shift = radius_km * 1000  # meters
+
+    g_west = geod.Direct(lat, lon, azi1, shift)
+    lon_west = g_west['lon2']
+
+    g_east = geod.Direct(lat, lon, -azi1, shift)
+    lon_east = g_east['lon2']
+
+    lat_north = lat + radius_km / 111.3
+    lat_south = lat - radius_km / 111.3
+
+    with Session() as session:
+        df = pd.read_sql(session.query(Stations).filter(
+            Stations.lat >= lat_south,
+            Stations.lat <= lat_north,
+            Stations.lon >= lon_west,
+            Stations.lon <= lon_east
+        ).statement, session.bind)
+        if len(df) == 0:
+            raise ValueError(f'No stations found in radius {radius_km}km around {lat}, {lon}')
+        return df
+
 
 def add_station(station_uuid: str, name: str, brand: str, street: str, place: str, lat: float, lng: float):
     # check max id of station_id
@@ -46,13 +74,13 @@ def add_station(station_uuid: str, name: str, brand: str, street: str, place: st
 def add_stations(df: pd.DataFrame):
     with Session() as session:
         df.to_sql(name=STATIONS_TABLE_NAME, con=session.bind, if_exists='append', index=False, dtype={
-            'uuid': types.VARCHAR(length=36),
-            'name': types.VARCHAR(length=100),
-            'brand': types.VARCHAR(length=100),
-            'street': types.VARCHAR(length=100),
-            'place': types.VARCHAR(length=100),
-            'lat': types.Float(),
-            'lon': types.Float()
+            'uuid': types.String,
+            'name': types.String,
+            'brand': types.String,
+            'street': types.String,
+            'place': types.String,
+            'lat': types.Float(precision=5),
+            'lng': types.Float(precision=5)
         })
 
 

@@ -3,7 +3,7 @@ import plotly.express as px
 import streamlit as st
 import datetime
 from dateutil import tz
-from data_access.functions import get_prices_by_date_tz, check_stations_csv
+from source.data_access.functions import get_prices_by_date_tz, check_stations_csv
 
 UUID_OMV_DONZDORF = "16f07bfd-0bde-4126-a393-ea8a7d053283"
 UUID_ARAL_GOEPPINGEN = "77c4cc3c-ae11-43c4-85cc-5c147409b46f"
@@ -33,7 +33,7 @@ selected_petrolgrade = st.sidebar.multiselect(
 date_range = st.sidebar.date_input(label="Select a date:",
                                    min_value=datetime.date(2014, 6, 8),
                                    max_value=datetime.date.today() - datetime.timedelta(days=1),
-                                   value=(datetime.date(2019, 10, 1), datetime.date(2019, 10, 5)))
+                                   value=(datetime.date.today() - datetime.timedelta(days=8), datetime.date.today() - datetime.timedelta(days=1)))
 if len(date_range) != 2:
     st.write("Select date range")
     st.stop()

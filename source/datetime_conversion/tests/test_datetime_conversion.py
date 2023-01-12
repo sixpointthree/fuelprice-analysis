@@ -13,10 +13,10 @@ def to_string(x):
 class TestDatetimeConversion(unittest.TestCase):
     def test_convert_df_to_epoch_seconds_utc(self):
         df = pd.DataFrame({'date': ['2019-11-10 00:00:00+01', '2022-11-10 00:00:00+01', '2019-10-01 00:00:00+02']})
-        df = convert_df_to_epoch_seconds_utc(df, 'date')
-        self.assertEqual(df['date'][0], 1573340400)
-        self.assertEqual(df['date'][1], 1668034800)
-        self.assertEqual(df['date'][2], 1569880800)
+        series = convert_df_to_epoch_seconds_utc(df, 'date')
+        self.assertEqual(series[0], 1573340400)
+        self.assertEqual(series[1], 1668034800)
+        self.assertEqual(series[2], 1569880800)
 
     def test_convert_from_epoch_to_iso8601_tz(self):
         df = pd.DataFrame({'date': [1573340400, 1668034800, 1569880800]})

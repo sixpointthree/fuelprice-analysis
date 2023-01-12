@@ -17,21 +17,21 @@ Base = declarative_base()
 class Prices(Base):
     __tablename__ = PRICES_TABLE_NAME
     timestamp = Column(Integer, primary_key=True)
-    station_uuid = Column(String, ForeignKey('stations.uuid'), primary_key=True)
-    price_diesel = Column(Float)
-    price_e5 = Column(Float)
-    price_e10 = Column(Float)
+    station_uuid = Column(String(length=36), ForeignKey('stations.uuid'), primary_key=True)
+    price_diesel = Column(Float(precision=3))
+    price_e5 = Column(Float(precision=3))
+    price_e10 = Column(Float(precision=3))
 
 # create table stations with id, name, brand, street, place, lat, lng
 class Stations(Base):
     __tablename__ = STATIONS_TABLE_NAME
-    uuid = Column(String, primary_key=True)
+    uuid = Column(String(length=36), primary_key=True)
     name = Column(String)
-    brand = Column(String)
+    brand = Column(String(length=30))
     street = Column(String)
     place = Column(String)
-    lat = Column(Integer)
-    lon = Column(Integer)
+    lat = Column(Float(precision=5))
+    lon = Column(Float(precision=5))
 
 
 #create db path recursively
