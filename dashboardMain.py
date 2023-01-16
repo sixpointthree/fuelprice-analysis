@@ -21,7 +21,7 @@ st.set_page_config(page_title="Dashboard",
                    )
 
 # filter petrol grade
-list_petrolgrade = ['diesel', 'e5', 'e10']
+list_petrolgrade = ['Diesel', 'E5', 'E10']
 st.sidebar.header("Filter here:")
 selected_petrolgrade_txt = st.sidebar.multiselect(
     "Select petrol grade:",
@@ -30,11 +30,11 @@ selected_petrolgrade_txt = st.sidebar.multiselect(
 )
 selected_petrolgrade = []
 for grade in selected_petrolgrade_txt:
-    if grade == 'diesel':
+    if grade == 'Diesel':
         selected_petrolgrade.append('price_diesel')
-    if grade == 'e5':
+    if grade == 'E5':
         selected_petrolgrade.append('price_e5')
-    if grade == 'e10':
+    if grade == 'E10':
         selected_petrolgrade.append('price_e10')
 
 # filter date range
@@ -50,6 +50,23 @@ else:
     to_datetime = datetime.datetime(date_range[1].year, date_range[1].month, date_range[1].day)
     df = get_prices_by_date_tz(from_datetime, to_datetime, station_uuids=[station_uuid], tz=tz.gettz('Europe/Berlin'))
 
+# filter location:
+# text input with submit button
+with st.sidebar.form(key='location_form'):
+    location_input = st.text_input("Enter location:", value="shell esslingen")
+    submit_button = st.form_submit_button(label='Find')
+
+if submit_button:
+    selected_stations = find_stations_from_db_by_location(location_input, 1)
+    if len(selected_stations) < 1:
+        st.sidebar.write(f"No stations found for query: {location_input}")
+    else:
+        station = selected_stations.iloc[0]
+        station_desc = (f"Station: {station['name']}, Brand: {station['brand']}, Address: {station['street']}, {station['place']}")
+        print(station_desc)
+        station_uuid = station['uuid']
+st.sidebar.write(station_desc)
+
 # -----Mainpage------
 st.title("Fuelprice Dashboard")
 st.markdown("##")
@@ -58,21 +75,6 @@ if selected_petrolgrade:
     tab_hist_data, tab_prediction, tab_recommend = st.tabs(['historic data', 'prediction', 'recommendationfor action'])
 
     with tab_hist_data:
-        # add text input with submit button
-        with st.form(key='location_form'):
-            location_input = st.text_input("Enter location:", value="shell esslingen")
-            submit_button = st.form_submit_button(label='Find')
-
-        if submit_button:
-            selected_stations = find_stations_from_db_by_location(location_input, 1)
-            if len(selected_stations) < 1:
-                st.write(f"No stations found for query: {location_input}")
-            else:
-                station = selected_stations.iloc[0]
-                station_desc = f"{station['name']}, Brand: {station['brand']}, Address: {station['street']}, {station['place']}"
-                print(station_desc)
-                station_uuid = station['uuid']
-        st.write(f"Station:    {station_desc}")
         left_col, right_col = st.columns([3, 10])
         # darstellung Durchschnitt, min, max der gewählten Spritsorten
         avg_price = df.loc[1:, selected_petrolgrade].mean(axis=0).round(decimals=2)
@@ -204,7 +206,7 @@ else:
     st.write("Select a petrol grade")
 
 # show table
-st.dataframe(df)
+# st.dataframe(df)
 
 
 st.markdown("----")
