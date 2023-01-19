@@ -42,13 +42,6 @@ date_range = st.sidebar.date_input(label="Select a date:",
                                    min_value=datetime.date(2014, 6, 8),
                                    max_value=datetime.date.today() - datetime.timedelta(days=1),
                                    value=(datetime.date.today() - datetime.timedelta(days=8), datetime.date.today() - datetime.timedelta(days=1)))
-if len(date_range) != 2:
-    st.write("Select date range")
-    st.stop()
-else:
-    from_datetime = datetime.date(date_range[0].year, date_range[0].month, date_range[0].day)
-    to_datetime = datetime.datetime(date_range[1].year, date_range[1].month, date_range[1].day)
-    df = get_prices_by_date_tz(from_datetime, to_datetime, station_uuids=[station_uuid], tz=tz.gettz('Europe/Berlin'))
 
 # filter location:
 # text input with submit button
@@ -67,12 +60,20 @@ if submit_button:
         station_uuid = station['uuid']
 st.sidebar.write(station_desc)
 
+if len(date_range) != 2:
+    st.write("Select date range")
+    st.stop()
+else:
+    from_datetime = datetime.date(date_range[0].year, date_range[0].month, date_range[0].day)
+    to_datetime = datetime.datetime(date_range[1].year, date_range[1].month, date_range[1].day)
+    df = get_prices_by_date_tz(from_datetime, to_datetime, station_uuids=[station_uuid], tz=tz.gettz('Europe/Berlin'))
+
 # -----Mainpage------
 st.title("Fuelprice Dashboard")
 st.markdown("##")
 
 if selected_petrolgrade:
-    tab_hist_data, tab_prediction, tab_recommend = st.tabs(['historic data', 'prediction', 'recommendationfor action'])
+    tab_hist_data, tab_prediction, tab_recommend = st.tabs(['Historic data', 'Prediction', 'Recommendation for action'])
 
     with tab_hist_data:
         left_col, right_col = st.columns([3, 10])
@@ -109,7 +110,8 @@ if selected_petrolgrade:
                 df,
                 x="timestamp",
                 y=selected_petrolgrade,
-                title="<b> Price per petrol grade</b>",
+                # set title to Price per petrol grade, then write the station_desc in a new line
+                title=f"Price per petrol grade<br><span style='font-size: 0.8em; color: gray'>{station_desc}</span>",
                 template="plotly_dark",
             )
             fig_fuelprice.update_layout(
@@ -125,7 +127,6 @@ if selected_petrolgrade:
 
         df_train = get_prices_by_date_tz(datetime.date(2023, 1, 4), datetime.date(2023, 1, 11),
                                          station_uuids=[UUID_OMV_DONZDORF], tz=tz.gettz('Europe/Berlin'))
-        print(df_train.head())
         prediction_algorithm = st.radio(
             "Select prediction algorithm",
             ("Naive", "Seasonal Naive", "ARIMA(2,1,2)(1,1,1)[24]")
@@ -164,7 +165,6 @@ if selected_petrolgrade:
                                                         day=TRAIN_END_DATE.day) + datetime.timedelta(hours=hour)
                     # convert filter_datetime to datetime64[ns, tzfile('Europe/Berlin')] with pandas.to_datetime
                     filter_datetime = pd.to_datetime(filter_datetime, utc=True).tz_convert('Europe/Berlin')
-                    print(filter_datetime)
                     df_predict['price_e5'].iloc[hour] = df_train[df_train['timestamp'] <= filter_datetime].iloc[-1][
                         'price_e5']
             elif prediction_algorithm == "ARIMA(2,1,2)(1,1,1)[24]":
@@ -181,7 +181,6 @@ if selected_petrolgrade:
                 print(model.predict(n_periods=24))
                 df_predict['price_e5'] = model.predict(n_periods=24)
 
-            print(df_predict)
             fig_pred = px.line(
                 df_predict,
                 x="timestamp",
