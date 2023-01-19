@@ -138,7 +138,8 @@ if selected_petrolgrade:
                 df_train,
                 x="timestamp",
                 y="price_e5",
-                title="<b> Training data </b>",
+                title=f"Training data<br><span style='font-size: 0.8em; color: gray'>"
+                      f"Anton Schmid GmbH 6 Co KG, Brand: None, Address: Mozartstraße 33, 73072 Donzdorf</span>",
                 template="plotly_dark",
             )
             fig_train.update_layout(
@@ -185,7 +186,8 @@ if selected_petrolgrade:
                 df_predict,
                 x="timestamp",
                 y="price_e5",
-                title="<b> Prediction </b>",
+                title=f"Prediction<br><span style='font-size: 0.8em; color: gray'>"
+                      f"1 Day</span>",
                 template="plotly_dark",
             )
             fig_pred.update_layout(
